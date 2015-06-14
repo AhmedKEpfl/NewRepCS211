@@ -60,6 +60,7 @@ public class TangibleGame extends PApplet {
 	public void draw() {
 		if (shift) {
 			mover.displayShift();
+			changeInputImage(loadImage("data/board2.jpg"));
 		} else {
 			mover.update();
 			mover.checkEdges();
@@ -537,7 +538,9 @@ public class TangibleGame extends PApplet {
 			}
 
 			if (afterFilterQuads.size() == 0) {
-				afterFilterQuads.add(quads.get(0));
+				if(quads.size() != 0){
+					afterFilterQuads.add(quads.get(0));	
+				}
 			} else if (afterFilterQuads.size() > 1) {
 				// We take the quad with the best angle
 				float minCos = 1.0f;

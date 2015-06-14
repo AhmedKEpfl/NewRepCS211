@@ -12,29 +12,37 @@ import processing.video.*;
 
 public class TangibleGame extends PApplet {
 	boolean shift;
-
+	HScrollbar thresholdBarHueMin, thresholdBarHueMax;
 	final static int WINDOW_WIDTH = 600, WINDOW_HEIGHT = 600;
+	final static int IMG_WIDTH = 400, THRESHODLD_HEIGHT = 20, SEPARATION_HEIGHT = 10;
+	final static float BASE_THRESHOLD_MAX = 138, BASE_THRESHOLD_MIN = 100;
 	Mover mover;
 
 	Movie movie;
-	PImage result, houghImg;
+	PImage result, houghImg, inputImage, newImage;
 
 	float discretizationStepsPhi = 0.06f;
 	float discretizationStepsR = 2.5f;
 	int phiDim = (int) (Math.PI / discretizationStepsPhi);
 	float[] tabSin;
 	float[] tabCos;
-	
-	ImageProcessing ip;
 
+	/**
+	 * this is the way to change the input image, it should work if we pass , at each frame,  
+	 * a video or a webcam capture
+	 * 
+	 * @param newImage
+	 */
+	public void changeInputImage(PImage newImage){
+		inputImage = newImage;
+	}
 	public void setup() {
-		size(WINDOW_WIDTH, WINDOW_HEIGHT, P3D);
+		size(WINDOW_WIDTH + IMG_WIDTH, WINDOW_HEIGHT + 2 * THRESHODLD_HEIGHT + SEPARATION_HEIGHT, P3D);
 		mover = new Mover(this);
 		shift = false;
 
-		movie = new Movie(this,
-				"/home/nataniel/IntroVisuelle/NewRepCS211/TGame/src/testvideo.mp4");
-		movie.loop();
+		initHScrollbars();
+
 
 		tabSin = new float[phiDim];
 		tabCos = new float[phiDim];
@@ -44,35 +52,46 @@ public class TangibleGame extends PApplet {
 			tabSin[accPhi] = (float) (Math.sin(ang));
 			tabCos[accPhi] = (float) (Math.cos(ang));
 		}
-		
-	    ip = new ImageProcessing();
+
+		inputImage = loadImage("data/board1.jpg");
+
 	}
 
 	public void draw() {
 		if (shift) {
 			mover.displayShift();
+			changeInputImage(loadImage("data/board2.jpg"));
 		} else {
-
 			mover.update();
 			mover.checkEdges();
 			mover.checkCylinderCollision();
 			mover.display();
-			
-			/*pushMatrix(); 
-		    popMatrix(); updateRotation(movie);*/
-			 
+			updateRotation(inputImage);
+			thresholdBarHueMax.display();
+			thresholdBarHueMin.display();
+			thresholdBarHueMax.update();
+			thresholdBarHueMin.update();
+
 		}
 	}
 	
+	public void initHScrollbars(){
+		thresholdBarHueMin = new HScrollbar(this, 0, WINDOW_HEIGHT, WINDOW_WIDTH, THRESHODLD_HEIGHT);
+		thresholdBarHueMax = new HScrollbar(this, 0, WINDOW_HEIGHT + THRESHODLD_HEIGHT + SEPARATION_HEIGHT,
+				WINDOW_WIDTH, THRESHODLD_HEIGHT);
+		thresholdBarHueMax.setPos(BASE_THRESHOLD_MAX/255);
+		thresholdBarHueMin.setPos(BASE_THRESHOLD_MIN/255);
+	}
+
 	/*
 	public void movieEvent(Movie m){
 		m.read();
 		pushMatrix(); 
-		updateRotation(movie);
+		updateRotatiobn(movie);
 	    popMatrix(); 
-	    
+
 	}
-	*/
+	 */
 
 	public void keyPressed() {
 		if (key == CODED) {
@@ -101,21 +120,21 @@ public class TangibleGame extends PApplet {
 	}
 
 	public void mouseDragged() {
-		mover.addRotationX((PI / 180) * (mouseY - pmouseY) * mover.getSpeed());
-		mover.addRotationZ((PI / 180) * (mouseX - pmouseX) * mover.getSpeed());
+		/*mover.addRotationX((PI / 180) * (mouseY - pmouseY) * mover.getSpeed());
+		mover.addRotationZ((PI / 180) * (mouseX - pmouseX) * mover.getSpeed());*/
 	}
 
 	PImage detectGreen(PImage img) {
 		PImage result = new PImage(img.width, img.height);
 		for (int i = 0; i < img.height; i++) {
 			for (int j = 0; j < img.width; j++) {
-				if (hue(img.pixels[i * img.width + j]) > 100
-						&& hue(img.pixels[i * img.width + j]) < 138
+				if (hue(img.pixels[i * img.width + j]) > thresholdBarHueMin.getPos() * 255
+						&& hue(img.pixels[i * img.width + j]) < thresholdBarHueMax.getPos() * 255
 						&& saturation(img.pixels[i * img.width + j]) > 50
 						&& brightness(img.pixels[i * img.width + j]) > 10
 						&& brightness(img.pixels[i * img.width + j]) < 245) {
 					result.pixels[i * img.width + j] = img.pixels[i * img.width
-							+ j];
+					                                              + j];
 				} else {
 					result.pixels[i * img.width + j] = color(0);
 				}
@@ -175,12 +194,12 @@ public class TangibleGame extends PApplet {
 				buffer[y * img.width + x] = sum;
 			}
 		}
-		// System.out.println(max);
+		
 		for (int y = 2; y < img.height - 2; y++) { // Skip top and bottom edges
 			for (int x = 2; x < img.width - 2; x++) { // Skip left and right
 				if (buffer[y * img.width + x] > (int) (max * 0.3f)) { // 30% of
-																		// the
-																		// max
+					// the
+					// max
 					result.pixels[y * img.width + x] = color(255);
 				} else {
 					result.pixels[y * img.width + x] = color(0);
@@ -351,11 +370,11 @@ public class TangibleGame extends PApplet {
 
 		ArrayList<Integer> bestCandidates = new ArrayList<Integer>();
 		ArrayList<PVector> arrayPVector = new ArrayList<PVector>();// the array
-																	// list
-																	// returned
-																	// by the
-																	// method
-																	// hough
+		// list
+		// returned
+		// by the
+		// method
+		// hough
 
 		// ...
 		// size of the region we search for a local maximum
@@ -440,8 +459,8 @@ public class TangibleGame extends PApplet {
 		float phi2 = l2.y;
 		double d = tabCos[(int) (phi2 / discretizationStepsPhi)]
 				* tabSin[(int) (phi1 / discretizationStepsPhi)]
-				- tabCos[(int) (phi1 / discretizationStepsPhi)]
-				* tabSin[(int) (phi2 / discretizationStepsPhi)];
+						- tabCos[(int) (phi1 / discretizationStepsPhi)]
+								* tabSin[(int) (phi2 / discretizationStepsPhi)];
 
 		float x = (float) ((r2 * tabSin[(int) (phi1 / discretizationStepsPhi)] - r1
 				* tabSin[(int) (phi2 / discretizationStepsPhi)]) / d);
@@ -464,8 +483,8 @@ public class TangibleGame extends PApplet {
 				float phi2 = line2.y;
 				double d = tabCos[(int) (phi2 / discretizationStepsPhi)]
 						* tabSin[(int) (phi1 / discretizationStepsPhi)]
-						- tabCos[(int) (phi1 / discretizationStepsPhi)]
-						* tabSin[(int) (phi2 / discretizationStepsPhi)];
+								- tabCos[(int) (phi1 / discretizationStepsPhi)]
+										* tabSin[(int) (phi2 / discretizationStepsPhi)];
 
 				float x = (float) ((r2
 						* tabSin[(int) (phi1 / discretizationStepsPhi)] - r1
@@ -482,17 +501,19 @@ public class TangibleGame extends PApplet {
 	}
 
 	public void updateRotation(PImage img) {
-
+		pushMatrix();
+		translate(600,0);
 		result = sobel(gaussianBlur(detectGreen(img), 99.0f));
 		scale(0.5f, 0.5f);
 		image(img, 0, 0);
-
+		fill(0);
+		rect(0f, img.height, result.width, img.height + result.height);
+		image(result, 0, img.height);
 		ArrayList<PVector> lines = hough(result);
 
 		QuadGraph quadGraph = new QuadGraph();
 		quadGraph.build(lines, result.width, result.height);
 		List<int[]> quads = quadGraph.findCycles();
-		System.out.println("Size of quads before filter : " + quads.size());
 		List<int[]> afterFilterQuads = new ArrayList<int[]>();
 		if (quads.size() > 0) {
 			for (int[] quad : quads) {
@@ -509,15 +530,17 @@ public class TangibleGame extends PApplet {
 				if (QuadGraph.isConvex(c12, c23, c34, c41)
 						&& QuadGraph.validArea(c12, c23, c34, c41, 170000,
 								30000)
-				// && QuadGraph.nonFlatQuad(c12, c23, c34, c41)
-				) {
+								// && QuadGraph.nonFlatQuad(c12, c23, c34, c41)
+						) {
 					afterFilterQuads.add(quad);
 				}
 
 			}
 
 			if (afterFilterQuads.size() == 0) {
-				afterFilterQuads.add(quads.get(0));
+				if(quads.size() != 0){
+					afterFilterQuads.add(quads.get(0));	
+				}
 			} else if (afterFilterQuads.size() > 1) {
 				// We take the quad with the best angle
 				float minCos = 1.0f;
@@ -544,7 +567,7 @@ public class TangibleGame extends PApplet {
 				afterFilterQuads.add(winnerQuad);
 			}
 
-			TwoDThreeD iconoclaste = new TwoDThreeD(movie.width, HEIGHT);
+			TwoDThreeD iconoclaste = new TwoDThreeD(inputImage.width, HEIGHT);
 			// There is only one quad here
 			for (int[] quad : afterFilterQuads) {
 				PVector l1 = lines.get(quad[0]);
@@ -569,7 +592,6 @@ public class TangibleGame extends PApplet {
 						c23, c34, c41));
 
 				CWComparator.sortCorners(list);
-				println("premier corner après tri x = " + list.get(0).x);
 
 				PVector rotation = iconoclaste.get3DRotations(list);
 				mover.setRotationX(rotation.x);
@@ -586,37 +608,9 @@ public class TangibleGame extends PApplet {
 						min(255, random.nextInt(300)), 50));
 				quad(c12.x, c12.y, c23.x, c23.y, c34.x, c34.y, c41.x, c41.y);
 
-				for (PVector line : linesTabel) {
-					float r = line.x;
-					float phi = line.y;
-					int x0 = 0;
-					int y0 = (int) (r / sin(phi));
-					int x1 = (int) (r / cos(phi));
-					int y1 = 0;
-					int x2 = result.width;
-					int y2 = (int) (-cos(phi) / sin(phi) * x2 + r / sin(phi));
-					int y3 = result.width;
-					int x3 = (int) (-(y3 - r / sin(phi)) * (sin(phi) / cos(phi)));
-					// Finally, plot the lines
-					stroke(204, 102, 0);
-					if (y0 > 0) {
-						if (x1 > 0)
-							line(x0, y0, x1, y1);
-						else if (y2 > 0)
-							line(x0, y0, x2, y2);
-						else
-							line(x0, y0, x3, y3);
-					} else {
-						if (x1 > 0) {
-							if (y2 > 0)
-								line(x1, y1, x2, y2);
-							else
-								line(x1, y1, x3, y3);
-						} else
-							line(x2, y2, x3, y3);
-					} // end if(y0 > 0)
-				} // end for
+
 			} // end for
 		}// end if quads.size() > 0
+		popMatrix();
 	}
 }

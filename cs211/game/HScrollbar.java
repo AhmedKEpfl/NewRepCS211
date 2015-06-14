@@ -120,4 +120,16 @@ public class HScrollbar {
 	float getPos() {
 		return (sliderPosition - xPosition) / (barWidth - barHeight);
 	}
+	
+	/**
+	 * @brief method added by the Nataniel
+	 * 
+	 * set the sliderPos to the value, wanted (between 0 and 1)
+	 */
+	void setPos(float value){
+		if(0 <= value && value <= 1){
+			sliderPosition = xPosition + (barWidth - barHeight)*value;
+			newSliderPosition = sliderPosition;
+		}
+	}
 }

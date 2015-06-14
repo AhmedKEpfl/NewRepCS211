@@ -85,7 +85,7 @@ public class Mover extends PApplet {
 	  }
 	
 	public void display() {
-	    
+
 	    app.pushMatrix();
 	    
 	    app.lights();
