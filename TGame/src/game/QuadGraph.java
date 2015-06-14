@@ -75,7 +75,6 @@ public class QuadGraph {
 			for (int i = 1; i < cy.length; i++) {
 				s += "," + cy[i];
 			}
-			System.out.println(s);
 		}
 		return cycles;
 	}
@@ -104,7 +103,7 @@ public class QuadGraph {
 					{
 						int[] p = normalize(path);
 						int[] inv = invert(p);
-						//On a rajouté mais c'est peut-être pas ça... ?? >:-()
+						//On a rajoutï¿½ mais c'est peut-ï¿½tre pas ï¿½a... ?? >:-()
 						if (isNew(p) && isNew(inv) && p.length == 4) {
 							cycles.add(p);
 						}
@@ -224,7 +223,6 @@ public class QuadGraph {
 				|| (i1 < 0 && i2 < 0 && i3 < 0 && i4 < 0))
 			return true;
 		else
-			System.out.println("Eliminating non-convex quad");
 		return false;
 
 	}
@@ -251,9 +249,7 @@ public class QuadGraph {
 
 		boolean valid = (area < max_area && area > min_area);
 
-		if (!valid)
-			System.out.println("Area out of range");
-
+		
 		return valid;
 	}
 
@@ -282,7 +278,6 @@ public class QuadGraph {
 				&& cos4 < min_cos)
 			return true;
 		else {
-			System.out.println("Flat quad");
 			return false;
 		}
 	}
